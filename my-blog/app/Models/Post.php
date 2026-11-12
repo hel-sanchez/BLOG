@@ -11,4 +11,9 @@ class Post extends Model
         'body',
         'is_published',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
