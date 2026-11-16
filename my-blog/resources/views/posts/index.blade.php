@@ -1,42 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>My Blog</title>
-</head>
-<body>
+@extends('layouts.app')
 
-    @extends('layouts.app')
+@section('title', 'All Posts')
 
-    @section('title', 'All Posts')
+@section('content')
+    <h1 class="text-2xl font-bold p-2">My Blog Posts</h1>
 
-    @section('content')
+    @if (session('success'))
+        <div class="bg-green-100 text-green-700 rounded-lg p-3 mb-5">
+            {{ session('success') }}
+        </div>
+    @endif
 
-        <h1 class="text-2xl font-bold p-2">My Blog Posts</h1>
+    @foreach ($posts as $post)
+        <article class="border-b border-gray-300 pb-4 mb-2 p-4">
+            <h2 class="text-xl font-semibold">{{ $post->title }}</h2>
+            <p class="text-sm text-gray-500">By {{ $post->user->name }}</p>
+            <p class="text-gray-700">{{ $post->body }}</p>
 
-        @foreach ($posts as $post)
+            <p class="text-sm text-gray-500">
+                Published:
+                {{ $post->is_published ? 'Yes' : 'No' }}
+            </p>
 
-            <article class="border-b border-gray-300 pb-4 mb-4 p-4">
-                <h2 class="text-xl font-semibold">{{ $post->title }}</h2>
+            <p class="text-sm text-gray-500">
+                Created at: {{ $post->created_at->format('Y-m-d H:i:s') }} <br />
+                Updated at: {{ $post->updated_at->format('Y-m-d H:i:s') }}
+            </p>
+        </article>
 
-                <p class="text-gray-700">{{ $post->body }}</p>
+        @can('delete', $post)
+            <form action="{{ route('posts.destroy', $post->id) }}" method="POST"
+                onsubmit="return confirm('Are you sure you want to delete this post?')">
+                @csrf
+                @method('DELETE')
 
-                <p class="text-sm text-gray-500">
-                    Published:
-                    {{ $post->is_published ? 'Yes' : 'No' }}
-                </p>
+                <button type="submit">Delete</button>
+            </form>
+        @endcan
 
-                <p class="text-sm text-gray-500">
-                    Created at: {{ $post->created_at->format('Y-m-d H:i:s') }} <br/>
-                    Updated at: {{ $post->updated_at->format('Y-m-d H:i:s') }}
-                </p>
-            </article>
+        @can('update', $post)
+            <a href="{{ route('posts.edit', $post->id) }}">
+                Edit
+            </a>
+        @endcan
 
-            <a href="{{ route('posts.edit', $post->id) }}" class="text-blue-500 hover:text-blue-700">Edit</a>
+        <hr class="my-4">
+    @endforeach
 
-            <hr>
-
-        @endforeach
-    @endsection
-
-</body>
-</html>
+    {{ $posts->links() }}
+@endsection

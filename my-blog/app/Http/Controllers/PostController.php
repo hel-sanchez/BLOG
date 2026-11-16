@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Post;
+use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
     public function index()
     {
         $posts = Post::all();
+
         return $posts;
     }
 
-    # JSONS
+    // JSONS
     public function store(Request $request)
     {
         $post = Post::create([
@@ -21,6 +22,7 @@ class PostController extends Controller
             'body' => $request->body,
             'is_published' => $request->is_published,
         ]);
+
         return $post;
     }
 
@@ -48,10 +50,10 @@ class PostController extends Controller
         return response()->json(['message' => 'Post deleted successfully!']);
     }
 
-    # WEB
+    // WEB
     public function page()
     {
-        $posts = Post::all();
+        $posts = Post::paginate(5);
 
         return view('posts.index', compact('posts'));
     }
@@ -70,14 +72,15 @@ class PostController extends Controller
 
         $validated['is_published'] = $request->boolean('is_published');
 
-        Post::create($validated);
+        $request->user()->posts()->create($validated);
 
-        return redirect()->route('posts.index');
+        return redirect()->route('posts.index')
+            ->with('success', 'Post created successfully!');
     }
 
     public function edit($id)
     {
-        $post = Post::findOrFail($id);
+        $post = auth()->user()->posts()->findOrFail($id);
 
         return view('posts.edit', compact('post'));
     }
@@ -85,6 +88,7 @@ class PostController extends Controller
     public function updateWeb(Request $request, $id)
     {
         $post = Post::findOrFail($id);
+        $this->authorize('update', $post);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -95,15 +99,27 @@ class PostController extends Controller
 
         $post->update($validated);
 
-        return redirect()->route('posts.index');
+        return redirect()->route('posts.index')
+            ->with('success', 'Post updated successfully!');
     }
 
     public function destroyWeb($id)
     {
         $post = Post::findOrFail($id);
 
+        $this->authorize('delete', $post);
+
         $post->delete();
 
-        return redirect()->route('posts.index');
+        return redirect()->route('posts.index')
+            ->with('success', 'Post deleted successfully!');
+    }
+
+    public function myPosts()
+    {
+        $user = auth()->user();
+        $posts = $user->posts()->paginate(5);
+
+        return view('posts.index', compact('posts'));
     }
 }

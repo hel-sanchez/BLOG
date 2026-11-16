@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     public function index()
     {
         $users = User::all();
+
         return $users;
     }
 
@@ -18,16 +19,18 @@ class UserController extends Controller
         return view('users.create');
     }
 
-    # JSONS
+    // JSONS
     public function store(Request $request)
     {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
         ]);
 
-        $user->User::create($request->validated());
-        return $user;
+        $user = User::create($validated);
+
+        return redirect()->route('login')
+            ->with('success', 'Account created successfully! Please log in.');
     }
 }
