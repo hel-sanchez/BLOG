@@ -10,6 +10,7 @@ class Post extends Model
         'title',
         'body',
         'is_published',
+        'image_path',
     ];
 
     public function user()

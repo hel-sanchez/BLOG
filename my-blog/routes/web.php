@@ -16,11 +16,11 @@ Route::middleware('auth')->group(function () {
         ->name('posts.create');
     Route::post('/posts', [PostController::class, 'storeWeb'])
         ->name('posts.store');
-    Route::get('/posts/{id}/edit', [PostController::class, 'edit'])
+    Route::get('/posts/{post}/edit', [PostController::class, 'edit'])
         ->name('posts.edit');
-    Route::put('/posts/{id}', [PostController::class, 'updateWeb'])
+    Route::put('/posts/{post}', [PostController::class, 'updateWeb'])
         ->name('posts.update');
-    Route::delete('/posts/{id}', [PostController::class, 'destroyWeb'])
+    Route::delete('/posts/{post}', [PostController::class, 'destroyWeb'])
         ->name('posts.destroy');
     Route::post('/logout', [LoginController::class, 'destroy'])
         ->name('logout');

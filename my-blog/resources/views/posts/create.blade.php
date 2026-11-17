@@ -5,13 +5,21 @@
 @section('content')
     <h1 class="text-2xl font-bold p-2">Create a New Post</h1>
 
-    <a href="{{ route('posts.create') }}" class="text-blue-500 hover:text-blue-700">Create New Post</a>
-
-    <form action="{{ route('posts.store') }}" method="POST" class="mt-4">
+    <form action="{{ route('posts.store') }}" method="POST" class="mt-4" enctype="multipart/form-data">
 
         @csrf
 
-        <div class="mb-4">
+        <div class="mb-4 mt-2">
+            <input type="file" name="image_path" id="image_path" accept="image/*"
+                class="px-2 py-1 bg-gray-300 border-1 cursor-pointer">
+            <img id="image_preview" class="mt-4 w-64 h-64 object-cover rounded-lg" alt="Image preview">
+            @error('image_path')
+                <p class="text-red-500 text-sm">{{ $message }}</p>
+            @enderror
+
+        </div>
+
+        <div class="mb-4 mt-2">
             <label class="block text-sm font-medium text-gray-700">Title</label>
             <input type="text" name="title" id="title" value="{{ old('title') }}"
                 class="border border-gray-300 rounded-md p-2 w-full">
@@ -40,14 +48,36 @@
             </label>
         </div>
 
-        <br><br>
+        <div class="flex justify-between">
 
-        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Create Post
-        </button>
+            <button type="submit"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
+                Create Post
+            </button>
 
+            <a href="{{ route('posts.index') }}"
+                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Back to Posts</a>
+        </div>
     </form>
 
-    <br />
-    <a href="{{ route('posts.index') }}" class="text-blue-500 hover:text-blue-700">Back to Posts</a>
+@endsection
+@section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageInput = document.getElementById('image_path');
+            const imagePreview = document.getElementById('image_preview');
+
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+
+                if (file) {
+                    imagePreview.src = URL.createObjectURL(file);
+                    imagePreview.classList.remove('hidden');
+                } else {
+                    imagePreview.classList.add('hidden');
+                    imagePreview.removeAttribute('src');
+                }
+            });
+        });
+    </script>
 @endsection

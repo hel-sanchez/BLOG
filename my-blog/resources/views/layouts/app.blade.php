@@ -4,12 +4,13 @@
 <head>
     <title>@yield('title')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @yield('scripts')
 </head>
 
 <body class="bg-gray-100 text-gray-900">
     <header class="bg-white shadow-md p-4">
         <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold">My Blog</h1>
+            <h1 class="text-2xl font-bold">Blogs</h1>
 
             @auth
                 <nav class="flex items-center gap-4 cursor-pointer">
