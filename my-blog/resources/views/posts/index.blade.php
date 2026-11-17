@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('title', 'All Posts')
@@ -17,17 +16,11 @@
         </div>
 
         <form action="{{ route('posts.index') }}" method="GET" class="flex">
-            <input
-                type="text"
-                id="searchInput"
-                name="keyword"
-                value="{{ request('keyword') }}"
+            <input type="text" id="searchInput" name="keyword" value="{{ request('keyword') }}"
                 placeholder="Search a story..."
-                class="border border-gray-300 px-4 py-2 w-full md:w-64 focus:outline-none focus:border-black"
-            >
+                class="border border-gray-300 px-4 py-2 w-full md:w-64 focus:outline-none focus:border-black">
 
-            <button type="submit"
-                class="bg-black text-white px-5 py-2 hover:bg-gray-700 transition">
+            <button type="submit" class="bg-black text-white px-5 py-2 hover:bg-gray-700 transition">
                 Search
             </button>
         </form>
@@ -43,17 +36,13 @@
     <div id="postsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
 
         @forelse ($posts as $post)
-
             <article class="group min-w-0">
 
                 <!-- Image -->
-                <a href="#" class="block overflow-hidden mb-3">
+                <a href="{{ route('posts.show', $post) }}" class="block overflow-hidden mb-3">
                     @if ($post->image_path)
-                        <img
-                            src="{{ asset('storage/' . $post->image_path) }}"
-                            alt="{{ $post->title }}"
-                            class="w-full aspect-[3/4] object-cover transition duration-500 group-hover:scale-105"
-                        >
+                        <img src="{{ asset('storage/' . $post->image_path) }}" alt="{{ $post->title }}"
+                            class="w-full aspect-[3/4] object-cover transition duration-500 group-hover:scale-105">
                     @else
                         <div class="w-full aspect-[3/4] bg-gray-100 flex items-center justify-center">
                             <span class="text-gray-400 text-sm">No image available</span>
@@ -68,7 +57,9 @@
 
                 <!-- Title -->
                 <h2 class="font-serif text-2xl leading-tight mb-3 group-hover:text-gray-500 transition">
-                    {{ $post->title }}
+                    <a href="{{ route('posts.show', $post) }}">
+                        {{ $post->title }}
+                    </a>
                 </h2>
 
                 <!-- Author -->
@@ -85,15 +76,13 @@
                 <div class="flex gap-4 mt-3 text-sm">
 
                     @can('update', $post)
-                        <a href="{{ route('posts.edit', $post->id) }}"
-                            class="underline hover:text-gray-500">
+                        <a href="{{ route('posts.edit', $post->id) }}" class="underline hover:text-gray-500">
                             Edit
                         </a>
                     @endcan
 
                     @can('delete', $post)
-                        <form action="{{ route('posts.destroy', $post->id) }}"
-                            method="POST"
+                        <form action="{{ route('posts.destroy', $post->id) }}" method="POST"
                             onsubmit="return confirm('Are you sure you want to delete this post?')">
 
                             @csrf
@@ -114,7 +103,6 @@
             <p class="col-span-full text-center text-gray-500 py-16">
                 No stories found.
             </p>
-
         @endforelse
 
     </div>

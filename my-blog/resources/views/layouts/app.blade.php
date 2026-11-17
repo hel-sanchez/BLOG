@@ -14,7 +14,7 @@
 
         <!-- Logo -->
         <div class="flex justify-center items-center py-6">
-            <a href="{{ route('home') }}" class="font-serif text-6xl md:text-8xl tracking-[0.15em]">
+            <a href="{{ auth()->check() ? route('posts.index') : route('home') }}" class="font-serif text-6xl md:text-8xl tracking-[0.15em]">
                 B&lt;OG
             </a>
         </div>

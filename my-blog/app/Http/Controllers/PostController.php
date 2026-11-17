@@ -44,12 +44,15 @@ class PostController extends Controller
 
     public function show(Post $post)
     {
-        // Only published posts can be viewed publicly
         abort_unless($post->is_published, 404);
 
-        $post->load('user');
+        $post->load(['user', 'category']);
+        $post->loadCount('likes');
 
-        return view('posts.show', compact('post'));
+        $liked = auth()->check()
+            && $post->likes()->where('user_id', auth()->id())->exists();
+
+        return view('posts.show', compact('post', 'liked'));
     }
 
     public function category(Category $category)

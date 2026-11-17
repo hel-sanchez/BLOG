@@ -4,6 +4,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LikeController;
 
 Route::get('/', [PostController::class, 'home'])
     ->name('home');
@@ -11,6 +12,8 @@ Route::get('/', [PostController::class, 'home'])
 Route::middleware('auth')->group(function () {
     Route::get('/posts', [PostController::class, 'page'])
         ->name('posts.index');
+    Route::get('/posts/search', [PostController::class, 'search'])
+        ->name('posts.search');
     Route::get('/posts/create', [PostController::class, 'create'])
         ->name('posts.create');
     Route::post('/posts', [PostController::class, 'storeWeb'])
@@ -21,12 +24,12 @@ Route::middleware('auth')->group(function () {
         ->name('posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroyWeb'])
         ->name('posts.destroy');
-    Route::post('/logout', [LoginController::class, 'destroy'])
-        ->name('logout');
     Route::get('/my-posts', [PostController::class, 'myPosts'])
         ->name('posts.my-posts');
-    Route::get('/posts/search', [PostController::class, 'search'])
-        ->name('posts.search');
+    Route::post('/posts/{post}/like', [LikeController::class, 'toggle'])
+        ->name('posts.like');
+    Route::post('/logout', [LoginController::class, 'destroy'])
+        ->name('logout');
 });
 
 Route::get('/categories/{category:slug}', [PostController::class, 'category'])
