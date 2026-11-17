@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'All Posts')
+@section('title', 'Create Posts')
 
 @section('content')
     <h1 class="text-2xl font-bold p-2">Create a New Post</h1>
@@ -41,6 +41,23 @@
                 </p>
             @enderror
         </div>
+
+        <div class="mb-4">
+            <label for="category_id" class="block mb-2 font-semibold">
+                Category
+            </label>
+
+            <select name="category_id" id="category_id" class="border rounded px-3 py-2 w-full">
+                <option value="">Choose a category</option>
+
+                @foreach ($categories as $category)
+                    <option value="{{ $category->id }}">
+                        {{ $category->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        
         <div class="mb-4">
             <label>
                 <input type="checkbox" name="is_published" value="1" @checked(old('is_published')) class="mr-2">

@@ -5,9 +5,8 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [PostController::class, 'home'])
+    ->name('home');
 
 Route::middleware('auth')->group(function () {
     Route::get('/posts', [PostController::class, 'page'])
@@ -26,7 +25,14 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
     Route::get('/my-posts', [PostController::class, 'myPosts'])
         ->name('posts.my-posts');
+    Route::get('/posts/search', [PostController::class, 'search'])
+        ->name('posts.search');
 });
+
+Route::get('/categories/{category:slug}', [PostController::class, 'category'])
+    ->name('categories.show');
+Route::get('/posts/{post}', [PostController::class, 'show'])
+    ->name('posts.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [UserController::class, 'create'])

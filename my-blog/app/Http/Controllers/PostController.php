@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,7 +13,54 @@ class PostController extends Controller
     {
         $posts = Post::all();
 
-        return $posts;
+        return response()->json([
+            'message' => 'Successfully logged in.',
+            'data' => $posts,
+        ], 200);
+    }
+
+    // HONE FEATURES
+    public function home()
+    {
+        $featuredPost = Post::with('user', 'category')
+            ->where('is_published', true)
+            ->latest()
+            ->first();
+
+        $recentPosts = Post::with('user', 'category')
+            ->where('is_published', true);
+
+        if ($featuredPost) {
+            $recentPosts->where('id', '!=', $featuredPost->id);
+        }
+
+        $recentPosts = $recentPosts->latest()->paginate(6);
+
+        return view('welcome', compact(
+            'featuredPost',
+            'recentPosts'
+        ));
+    }
+
+    public function show(Post $post)
+    {
+        // Only published posts can be viewed publicly
+        abort_unless($post->is_published, 404);
+
+        $post->load('user');
+
+        return view('posts.show', compact('post'));
+    }
+
+    public function category(Category $category)
+    {
+        $posts = $category->posts()
+            ->with('user')
+            ->where('is_published', true)
+            ->latest()
+            ->paginate(6);
+
+        return view('categories.show', compact('category', 'posts'));
     }
 
     // JSONS
@@ -31,11 +79,16 @@ class PostController extends Controller
 
         $post = Post::create($validated);
 
-        return response()->json($post, 201);
+        return response()->json([
+            'message' => 'Created successfully.',
+            'data' => $post,
+        ], 201);
     }
 
     public function update(Request $request, Post $post)
     {
+        $this->authorize('update', $post);
+
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'body' => 'sometimes|required|string',
@@ -59,31 +112,51 @@ class PostController extends Controller
 
         $post->update($validated);
 
-        return $post;
+        return response()->json([
+            'message' => 'Updated successfully.',
+            'data' => $post,
+        ], 200);
     }
 
     public function destroy(Post $post)
     {
+        $this->authorize('delete', $post);
+
         if ($post->image_path) {
             Storage::disk('public')->delete($post->image_path);
         }
 
         $post->delete();
 
-        return response()->json(['message' => 'Post deleted successfully!']);
+        return response()->json([
+            'message' => 'Post deleted successfully!',
+            'data' => $post,
+        ], 200);
     }
 
     // WEB
-    public function page()
+    public function page(Request $request)
     {
-        $posts = Post::with('user')->paginate(5);
+        $keyword = $request->input('keyword');
+        $query = Post::with('user');
+
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('title', 'like', '%'.$keyword.'%')
+                    ->orWhere('body', 'like', '%'.$keyword.'%');
+            });
+        }
+
+        $posts = $query->paginate(5);
 
         return view('posts.index', compact('posts'));
     }
 
     public function create()
     {
-        return view('posts.create');
+        $categories = Category::all();
+
+        return view('posts.create', compact('categories'));
     }
 
     public function storeWeb(Request $request)
@@ -93,6 +166,7 @@ class PostController extends Controller
             'body' => 'required|string',
             'is_published' => 'sometimes|boolean',
             'image_path' => 'nullable|image|max:2048',
+            'category_id' => 'required|exists:categories,id',
         ]);
 
         $validated['is_published'] = $request->boolean('is_published');
@@ -111,7 +185,9 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
-        return view('posts.edit', compact('post'));
+        $categories = Category::all();
+
+        return view('posts.edit', compact('post', 'categories'));
     }
 
     public function updateWeb(Request $request, Post $post)
@@ -122,6 +198,7 @@ class PostController extends Controller
             'title' => 'required|string|max:255',
             'body' => 'required|string',
             'image_path' => 'nullable|image|max:2048',
+            'category_id' => 'required|exists:categories,id',
         ]);
 
         $validated['is_published'] = $request->boolean('is_published');
@@ -175,5 +252,24 @@ class PostController extends Controller
         $totalPosts = $user->posts()->count();
 
         return view('users.posts', compact('posts', 'totalPosts', 'status'));
+    }
+
+    public function search(Request $request)
+    {
+        $keyword = trim($request->input('keyword', ''));
+
+        if ($keyword === '') {
+            return response()->json([]);
+        }
+
+        $pattern = '(^|[^[:alnum:]_])'
+                 .preg_quote($keyword, '/')
+                 .'([^[:alnum:]_]|$)';
+
+        $posts = Post::where('title', 'REGEXP', $pattern)
+            ->orWhere('body', 'REGEXP', $pattern)
+            ->get();
+
+        return $posts;
     }
 }
