@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
 use App\Models\Category;
+use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -22,10 +22,22 @@ class PostController extends Controller
     // HONE FEATURES
     public function home()
     {
+        if (auth()->check()) {
+            return redirect()->route('posts.index');
+        }
+
         $featuredPost = Post::with('user', 'category')
             ->where('is_published', true)
+            ->withCount('likes')
             ->latest()
             ->first();
+
+        $popularPosts = Post::where('is_published', true)
+            ->with(['user', 'category'])
+            ->withCount('likes')
+            ->orderByDesc('likes_count')
+            ->take(5)
+            ->get();
 
         $recentPosts = Post::with('user', 'category')
             ->where('is_published', true);
@@ -38,6 +50,7 @@ class PostController extends Controller
 
         return view('welcome', compact(
             'featuredPost',
+            'popularPosts',
             'recentPosts'
         ));
     }
@@ -46,7 +59,7 @@ class PostController extends Controller
     {
         abort_unless($post->is_published, 404);
 
-        $post->load(['user', 'category']);
+        $post->load(['user', 'category', 'comments.user']);
         $post->loadCount('likes');
 
         $liked = auth()->check()
@@ -70,7 +83,18 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $wordCount = preg_match_all('/\S+/u', trim($value));
+
+                    if ($wordCount > 10) {
+                        $fail('The title cannot contain more than 10 words.');
+                    }
+                },
+            ],
             'body' => 'required|string',
             'is_published' => 'sometimes|boolean',
             'image_path' => 'nullable|image|max:2048',
@@ -141,7 +165,8 @@ class PostController extends Controller
     public function page(Request $request)
     {
         $keyword = $request->input('keyword');
-        $query = Post::with('user');
+        $query = Post::with(['user', 'category'])
+            ->where('is_published', true);
 
         if ($keyword) {
             $query->where(function ($q) use ($keyword) {
@@ -150,7 +175,7 @@ class PostController extends Controller
             });
         }
 
-        $posts = $query->paginate(5);
+        $posts = $query->latest()->paginate(5);
 
         return view('posts.index', compact('posts'));
     }
@@ -165,7 +190,18 @@ class PostController extends Controller
     public function storeWeb(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $wordCount = preg_match_all('/\S+/u', trim($value));
+
+                    if ($wordCount > 10) {
+                        $fail('The title cannot contain more than 10 words.');
+                    }
+                },
+            ],
             'body' => 'required|string',
             'is_published' => 'sometimes|boolean',
             'image_path' => 'nullable|image|max:2048',
@@ -198,7 +234,18 @@ class PostController extends Controller
         $this->authorize('update', $post);
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $wordCount = preg_match_all('/\S+/u', trim($value));
+
+                    if ($wordCount > 10) {
+                        $fail('The title cannot contain more than 10 words.');
+                    }
+                },
+            ],
             'body' => 'required|string',
             'image_path' => 'nullable|image|max:2048',
             'category_id' => 'required|exists:categories,id',
@@ -250,7 +297,7 @@ class PostController extends Controller
             $query->where('is_published', false);
         }
 
-        $posts = $query->paginate(5)->withQueryString();
+        $posts = $query->with('category')->paginate(5)->withQueryString();
 
         $totalPosts = $user->posts()->count();
 

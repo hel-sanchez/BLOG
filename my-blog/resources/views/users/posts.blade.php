@@ -1,85 +1,215 @@
- @extends('layouts.app')
+@extends('layouts.app')
 
- @section('title', 'My Posts')
+@section('title', 'My Stories')
 
- @section('content')
-     <div class="flex justify-between">
-         <h1 class="text-2xl font-bold p-2">My Blog Posts ({{ $totalPosts }})</h1>
+@section('content')
+    <div class="max-w-7xl mx-auto">
+        {{-- PAGE HEADER --}}
+        <div class="border-b border-gray-300 pb-8 mb-10">
+            <p class="text-xs uppercase tracking-[0.3em] text-gray-500 mb-3">
+                YOUR WRITING SPACE
+            </p>
 
-         <nav class="flex mb-5">
-             <a href="{{ route('posts.my-posts', ['status' => 'all']) }}"
-                 class="{{ $status === 'all' ? 'bg-blue-300 border-1 border:bg-blue-300' : '' }} px-2 py-1 rounded">
-                 All
-             </a>
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-5">
+                <div>
+                    <h1 class="font-serif text-4xl md:text-6xl font-bold">
+                        My Stories.
+                    </h1>
 
-             <a href="{{ route('posts.my-posts', ['status' => 'published']) }}"
-                 class="{{ $status === 'published' ? 'bg-green-300 border-1 border:bg-green-300' : '' }} px-2 py-1 rounded">
-                 Published
-             </a>
+                    <p class="text-sm text-gray-500 mt-3">
+                        Manage your published stories and unfinished drafts.
+                    </p>
+                </div>
 
-             <a href="{{ route('posts.my-posts', ['status' => 'unpublished']) }}"
-                 class="{{ $status === 'unpublished' ? 'bg-yellow-300 border-1 border:bg-yellow-300' : '' }} px-2 py-1 rounded">
-                 Unpublished
-             </a>
-         </nav>
-     </div>
+                <a href="{{ route('posts.create') }}"
+                    class="inline-block bg-black text-white px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] hover:bg-gray-700 transition text-center">
+                    + Write a Post
+                </a>
+            </div>
+        </div>
 
-     @if (session('success'))
-         <div class="bg-green-100 text-green-700 rounded-lg p-3 mb-5">
-             {{ session('success') }}
-         </div>
-     @endif
+        {{-- SUCCESS MESSAGE --}}
+        @if (session('success'))
+            <div class="border border-green-200 bg-green-50 text-green-700 text-sm p-4 mb-8">
+                {{ session('success') }}
+            </div>
+        @endif
 
-     @foreach ($posts as $post)
-         <article class="border-b border-gray-300 pb-4 mb-2 p-4">
-             <h2 class="text-xl font-semibold">{{ $post->title }}</h2>
-             @if ($post->image_path)
-                 <img src="{{ asset('storage/' . $post->image_path) }}" alt="Post image"
-                     class="rounded w-48 h-48 object-center object-cover" draggable=False>
-             @endif
-             <p class="text-sm text-gray-500">By: {{ $post->user?->name ?? 'Unknown author' }}</p>
+        {{-- POST SUMMARY AND FILTERS --}}
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6 mb-10">
+            {{-- TOTAL POSTS --}}
+            <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-gray-400">
+                    Your collection
+                </p>
 
-             <p class="text-gray-700">{{ $post->body }}</p>
+                <p class="font-serif text-3xl font-bold mt-1">
+                    {{ $totalPosts }}
+                    <span class="text-base font-normal text-gray-500">
+                        {{ $totalPosts === 1 ? 'Story' : 'Stories' }}
+                    </span>
+                </p>
+            </div>
 
-             <p class="text-sm text-gray-500">
-                 Published:
-                 {{ $post->is_published ? 'Yes' : 'No' }}
-             </p>
+            {{-- STATUS FILTERS --}}
+            <nav class="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wider">
+                <a href="{{ route('posts.my-posts', ['status' => 'all']) }}"
+                    class="px-4 py-3 border transition
+                    {{ $status === 'all'
+                        ? 'bg-black text-white border-black'
+                        : 'border-gray-300 text-gray-500 hover:border-black hover:text-black' }}">
+                    All Stories
+                </a>
 
-             <p class="text-sm text-gray-500">
-                 Created at: {{ $post->created_at->format('Y-m-d H:i:s') }} <br />
-                 Updated at: {{ $post->updated_at->format('Y-m-d H:i:s') }}
-             </p>
-         </article>
+                <a href="{{ route('posts.my-posts', ['status' => 'published']) }}"
+                    class="px-4 py-3 border transition
+                    {{ $status === 'published'
+                        ? 'bg-black text-white border-black'
+                        : 'border-gray-300 text-gray-500 hover:border-black hover:text-black' }}">
+                    Published
+                </a>
 
-         <div class="flex justify-between">
-             <div class="flex gap-5">
-                 @can('delete', $post)
-                     <form action="{{ route('posts.destroy', $post->id) }}" method="POST"
-                         onsubmit="return confirm('Are you sure you want to delete this post?')">
-                         @csrf
-                         @method('DELETE')
+                <a href="{{ route('posts.my-posts', ['status' => 'unpublished']) }}"
+                    class="px-4 py-3 border transition
+                    {{ $status === 'unpublished'
+                        ? 'bg-black text-white border-black'
+                        : 'border-gray-300 text-gray-500 hover:border-black hover:text-black' }}">
+                    Drafts
+                </a>
+            </nav>
+        </div>
 
-                         <button type="submit"
-                             class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-800 cursor-pointer">Delete</button>
-                     </form>
-                 @endcan
+        {{-- POSTS GRID --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-7 gap-y-12">
+            @forelse ($posts as $post)
+                <article class="group min-w-0">
+                    {{-- COVER IMAGE --}}
+                    <a href="{{ $post->is_published ? route('posts.show', $post) : route('posts.edit', $post->id) }}"
+                        class="block overflow-hidden mb-5 bg-gray-100">
 
-                 @can('update', $post)
-                     <a href="{{ route('posts.edit', $post->id) }}"
-                         class="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-800 cursor-pointer">
-                         Edit
-                     </a>
-                 @endcan
-             </div>
+                        @if ($post->image_path)
+                            <img src="{{ asset('storage/' . $post->image_path) }}" alt="{{ $post->title }}"
+                                class="w-full aspect-[4/3] object-cover transition duration-500 group-hover:scale-105"
+                                draggable="false">
+                        @else
+                            <div class="w-full aspect-[4/3] flex items-center justify-center">
+                                <span class="font-serif text-xl italic text-gray-400">
+                                    No cover image
+                                </span>
+                            </div>
+                        @endif
+                    </a>
 
-             <span class="{{ $post->is_published ? 'bg-green-500' : 'bg-yellow-500' }} text-white rounded px-2 py-1">
-                 {{ $post->is_published ? 'Published' : 'Unpublished' }}
-             </span>
-         </div>
+                    {{-- PUBLICATION STATUS AND DATE --}}
+                    <div class="flex justify-between items-center gap-3 mb-4">
+                        <span
+                            class="text-[10px] font-bold uppercase tracking-[0.2em]
+                            {{ $post->is_published ? 'text-green-700' : 'text-yellow-700' }}">
 
-         <hr class="my-2">
-     @endforeach
+                            {{ $post->is_published ? '● Published' : '● Draft' }}
 
-     {{ $posts->links() }}
- @endsection
+                        </span>
+
+                        <span class="text-xs text-gray-400">
+                            {{ $post->created_at->format('M d, Y') }}
+                        </span>
+                    </div>
+
+                    {{-- TITLE --}}
+                    <h2
+                        class="font-serif text-2xl md:text-3xl font-bold leading-tight mb-3 break-words [overflow-wrap:anywhere] group-hover:text-gray-500 transition">
+                        <a
+                            href="{{ $post->is_published ? route('posts.show', $post) : route('posts.edit', $post->id) }}">
+
+                            {{ $post->title }}
+                        </a>
+                    </h2>
+
+                    {{-- CATEGORY --}}
+                    @if ($post->category)
+                        <p class="text-xs uppercase tracking-widest text-gray-400 mb-4">
+                            {{ $post->category->name }}
+                        </p>
+                    @endif
+
+                    {{-- BODY PREVIEW --}}
+                    <p class="text-sm text-gray-600 leading-relaxed mb-5 break-words [overflow-wrap:anywhere]">
+                        {{ \Illuminate\Support\Str::limit($post->body, 180) }}
+                    </p>
+
+                    {{-- POST DETAILS --}}
+                    <div class="border-t border-gray-200 pt-4 text-xs text-gray-400 space-y-1">
+                        <p>
+                            Last updated:
+                            {{ $post->updated_at->format('M d, Y · h:i A') }}
+                        </p>
+
+                        @if ($post->created_at != $post->updated_at)
+                            <p>
+                                Edited after creation
+                            </p>
+                        @endif
+                    </div>
+
+                    {{-- ACTIONS --}}
+                    <div class="flex flex-wrap items-center gap-5 mt-5 pt-4 border-t border-gray-200">
+                        @can('update', $post)
+                            <a href="{{ route('posts.edit', $post->id) }}"
+                                class="text-xs font-bold uppercase tracking-widest hover:text-gray-500 transition">
+                                Edit Story →
+                            </a>
+                        @endcan
+
+                        @can('delete', $post)
+                            <form action="{{ route('posts.destroy', $post->id) }}" method="POST"
+                                onsubmit="return confirm('Are you sure you want to delete this story?')">
+
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit"
+                                    class="text-xs font-bold uppercase tracking-widest text-red-500 hover:text-red-700 transition cursor-pointer">
+                                    Delete
+                                </button>
+                            </form>
+                        @endcan
+                    </div>
+                </article>
+            @empty
+                {{-- EMPTY STATE --}}
+                <div class="col-span-full border-y border-gray-300 py-20 text-center">
+                    <p class="text-xs uppercase tracking-[0.3em] text-gray-400 mb-4">
+                        Nothing here yet
+                    </p>
+
+                    <h2 class="font-serif text-3xl md:text-4xl font-bold mb-4">
+                        Your next story starts here.
+                    </h2>
+
+                    <p class="text-sm text-gray-500 mb-8">
+                        You haven't created any stories in this collection yet.
+                    </p>
+
+                    <a href="{{ route('posts.create') }}"
+                        class="inline-block bg-black text-white px-7 py-4 text-xs font-bold uppercase tracking-[0.2em] hover:bg-gray-700 transition">
+                        Write Your First Story →
+                    </a>
+                </div>
+            @endforelse
+        </div>
+
+        {{-- PAGINATION --}}
+        @if ($posts->hasPages())
+            <div class="border-t border-gray-300 mt-16 pt-8">
+                {{ $posts->withQueryString()->links() }}
+            </div>
+        @endif
+
+        {{-- BOTTOM NOTE --}}
+        <div class="border-t border-gray-300 mt-16 pt-8 text-center">
+            <p class="font-serif text-xl md:text-2xl italic text-gray-500">
+                "Keep writing. Your next story might be someone's favorite."
+            </p>
+        </div>
+    </div>
+@endsection

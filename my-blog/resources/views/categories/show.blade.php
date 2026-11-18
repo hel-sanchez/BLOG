@@ -19,7 +19,7 @@
 
             @forelse ($posts as $post)
                 <article>
-                    <h2 class="text-xl font-serif font-bold">
+                    <h2 class="text-xl font-serif font-bold break-words [overflow-wrap:anywhere]">
                         <a href="{{ route('posts.show', $post) }}">
                             {{ $post->title }}
                         </a>

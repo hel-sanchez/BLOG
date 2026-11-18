@@ -9,6 +9,8 @@ class LikeController extends Controller
 {
     public function toggle(Post $post)
     {
+        abort_unless($post->is_published, 404);
+        
         $user = auth()->user();
 
         $like = $user->likes()

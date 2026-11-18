@@ -5,6 +5,8 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LikeController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/', [PostController::class, 'home'])
     ->name('home');
@@ -28,6 +30,14 @@ Route::middleware('auth')->group(function () {
         ->name('posts.my-posts');
     Route::post('/posts/{post}/like', [LikeController::class, 'toggle'])
         ->name('posts.like');
+    Route::post('/posts/{post}/comments', [CommentController::class, 'store'])
+        ->name('comments.store');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])
+        ->name('comments.destroy');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
     Route::post('/logout', [LoginController::class, 'destroy'])
         ->name('logout');
 });
@@ -36,6 +46,8 @@ Route::get('/categories/{category:slug}', [PostController::class, 'category'])
     ->name('categories.show');
 Route::get('/posts/{post}', [PostController::class, 'show'])
     ->name('posts.show');
+Route::get('/users/{user}', [ProfileController::class, 'show'])
+    ->name('users.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [UserController::class, 'create'])
